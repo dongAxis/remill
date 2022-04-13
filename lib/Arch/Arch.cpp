@@ -178,12 +178,6 @@ auto Arch::Build(llvm::LLVMContext *context_, OSName os_name_,
       break;
     }
 
-    case kArchX86_SLEIGH: {
-      DLOG(INFO) << "Using architecture: X86, decoder: SLEIGH";
-      ret = GetSleighX86(context_, os_name_, arch_name_);
-      break;
-    }
-
     case kArchAMD64: {
       DLOG(INFO) << "Using architecture: AMD64";
       ret = GetX86(context_, os_name_, arch_name_);
@@ -202,12 +196,6 @@ auto Arch::Build(llvm::LLVMContext *context_, OSName os_name_,
       break;
     }
 
-    case kArchAMD64_SLEIGH: {
-      DLOG(INFO) << "Using architecture: AMD64, decoder: SLEIGH";
-      ret = GetSleighX86(context_, os_name_, arch_name_);
-      break;
-    }
-
     case kArchSparc32: {
       DLOG(INFO) << "Using architecture: 32-bit SPARC";
       ret = GetSPARC(context_, os_name_, arch_name_);
@@ -217,13 +205,6 @@ auto Arch::Build(llvm::LLVMContext *context_, OSName os_name_,
     case kArchSparc64: {
       DLOG(INFO) << "Using architecture: 64-bit SPARC";
       ret = GetSPARC64(context_, os_name_, arch_name_);
-      break;
-    }
-
-    case kArchThumb2LittleEndian: {
-      DLOG(WARNING) << "Using architecture: Aarch32/Thumb2. WARNING: not fully implemented at this point.";
-      //TODO(artem): Fix this once Thumb2 fully supported
-      ret = GetAArch32(context_, os_name_, arch_name_);
       break;
     }
   }
@@ -616,8 +597,8 @@ llvm::Value *Register::AddressOf(llvm::Value *state_ptr,
   const auto &dl = module->getDataLayout();
 
   if (!gep_type_at_offset) {
-    const_cast<Register *>(this)->CompteGEPAccessors(
-        arch->DataLayout(), state_type);
+    const_cast<Register *>(this)->CompteGEPAccessors(arch->DataLayout(),
+                                                     state_type);
   }
 
   llvm::Value *gep = nullptr;
@@ -677,13 +658,11 @@ void Arch::PrepareModuleDataLayout(llvm::Module *mod) const {
   for (llvm::Function &func : *mod) {
     auto attribs = func.getAttributes();
     IF_LLVM_LT_1400(
-    attribs = attribs.removeAttributes(
-        context, llvm::AttributeLoc::FunctionIndex, target_attribs)
-    );
+        attribs = attribs.removeAttributes(
+            context, llvm::AttributeLoc::FunctionIndex, target_attribs));
 
-    IF_LLVM_GTE_1400(
-    attribs = attribs.removeFnAttributes(context, llvm::AttributeMask(target_attribs))
-    );
+    IF_LLVM_GTE_1400(attribs = attribs.removeFnAttributes(
+                         context, llvm::AttributeMask(target_attribs)));
 
     func.setAttributes(attribs);
   }
@@ -747,8 +726,7 @@ void Arch::InitializeEmptyLiftedFunction(llvm::Function *func) const {
   // NOTE(pag): `PC` and `NEXT_PC` are handled by
   //            `FinishLiftedFunctionInitialization`.
 
-  ir.CreateStore(state, ir.CreateAlloca(state->getType(),
-                                        nullptr, "STATE"));
+  ir.CreateStore(state, ir.CreateAlloca(state->getType(), nullptr, "STATE"));
   ir.CreateStore(memory, ir.CreateAlloca(memory->getType(), nullptr, "MEMORY"));
 
   FinishLiftedFunctionInitialization(module, func);
@@ -759,9 +737,9 @@ void Arch::PrepareModule(llvm::Module *mod) const {
   PrepareModuleDataLayout(mod);
 }
 
-const Register *ArchBase::AddRegister(
-    const char *reg_name_, llvm::Type *val_type,
-    size_t offset, const char *parent_reg_name) const {
+const Register *ArchBase::AddRegister(const char *reg_name_,
+                                      llvm::Type *val_type, size_t offset,
+                                      const char *parent_reg_name) const {
 
   CHECK_NOTNULL(val_type);
 
@@ -828,7 +806,7 @@ void ArchBase::InitFromSemanticsModule(llvm::Module *module) const {
   // TODO(pag): Eventually we need a reliable way to get this that will work
   //            in the presence of opaque pointers.
   state_type =
-     llvm::dyn_cast<llvm::StructType>(state_ptr_type->getPointerElementType());
+      llvm::dyn_cast<llvm::StructType>(state_ptr_type->getPointerElementType());
 
   reg_by_offset.resize(dl.getTypeAllocSize(state_type));
   memory_type = llvm::dyn_cast<llvm::PointerType>(
