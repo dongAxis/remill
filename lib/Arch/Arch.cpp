@@ -111,10 +111,8 @@ ArchLocker Arch::Lock(ArchName arch_name_) {
     case ArchName::kArchAArch32LittleEndian:
     case ArchName::kArchThumb2LittleEndian:
     case ArchName::kArchAMD64_SLEIGH:
-    case ArchName::kArchX86_SLEIGH:
-      return &gSleighArchLock;
-    default:
-      return ArchLocker();
+    case ArchName::kArchX86_SLEIGH: return &gSleighArchLock;
+    default: return ArchLocker();
   }
 }
 
@@ -183,6 +181,18 @@ auto Arch::Build(llvm::LLVMContext *context_, OSName os_name_,
     case kArchX86: {
       DLOG(INFO) << "Using architecture: X86";
       ret = GetX86(context_, os_name_, arch_name_);
+      break;
+    }
+
+    case kArchX86_SLEIGH: {
+      DLOG(INFO) << "Using architecture: X86_Sleigh";
+      ret = GetSleighX86(context_, os_name_, arch_name_);
+      break;
+    }
+
+    case kArchAMD64_SLEIGH: {
+      DLOG(INFO) << "Using architecture: X86_Sleigh";
+      ret = GetSleighX86(context_, os_name_, arch_name_);
       break;
     }
 

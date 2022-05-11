@@ -77,16 +77,14 @@ class ArchLocker {
   ArchLocker(const ArchLocker &) = delete;
   ArchLocker &operator=(const ArchLocker &) = delete;
 
-  inline ArchLocker(std::mutex *lock_)
-      : lock(lock_) {
+  inline ArchLocker(std::mutex *lock_) : lock(lock_) {
     if (lock) {
       lock->lock();
     }
   }
 
  public:
-  inline ArchLocker(void)
-      : lock(nullptr) {}
+  inline ArchLocker(void) : lock(nullptr) {}
 
   inline ~ArchLocker(void) {
     if (lock) {
@@ -94,8 +92,7 @@ class ArchLocker {
     }
   }
 
-  inline ArchLocker(ArchLocker &&that) noexcept
-      : lock(that.lock) {
+  inline ArchLocker(ArchLocker &&that) noexcept : lock(that.lock) {
     that.lock = nullptr;
   }
 
@@ -110,9 +107,8 @@ struct Register {
  public:
   friend class Arch;
 
-  Register(const std::string &name_, uint64_t offset_,
-           llvm::Type *type_, const Register *parent_,
-           const Arch *arch_);
+  Register(const std::string &name_, uint64_t offset_, llvm::Type *type_,
+           const Register *parent_, const Arch *arch_);
 
   std::string name;  // Name of the register.
   uint64_t offset;  // Byte offset in `State`.
@@ -203,8 +199,8 @@ class Arch {
   virtual llvm::FunctionType *LiftedFunctionType(void) const = 0;
 
   // Apply `cb` to every register.
-  virtual void ForEachRegister(
-      std::function<void(const Register *)> cb) const = 0;
+  virtual void
+  ForEachRegister(std::function<void(const Register *)> cb) const = 0;
 
   // Return information about the register at offset `offset` in the `State`
   // structure.
@@ -374,9 +370,9 @@ class Arch {
   //
   // NOTE(pag): Internal API; do not invoke unless you are proxying/composing
   //            architectures.
-  virtual const Register *AddRegister(
-      const char *reg_name, llvm::Type *val_type,
-      size_t offset, const char *parent_reg_name) const = 0;
+  virtual const Register *AddRegister(const char *reg_name,
+                                      llvm::Type *val_type, size_t offset,
+                                      const char *parent_reg_name) const = 0;
 
   // Returns a lock on global state. In general, Remill doesn't use global
   // variables for storing state; however, SLEIGH sometimes does, and so when
